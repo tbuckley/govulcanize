@@ -1,7 +1,6 @@
 package pathresolver
 
 import (
-	"code.google.com/p/go.net/html"
 	"github.com/tbuckley/vulcanize/htmlutils"
 	"path/filepath"
 	"regexp"
@@ -14,7 +13,7 @@ var (
 	URL_TEMPLATE = regexp.MustCompilePOSIX("{{.*}}")
 )
 
-func ResolvePaths(input *html.Node, inputPath string, outputPath string) {
+func ResolvePaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	resolveAttributePaths(input, inputPath, outputPath)
 	resolveCSSPaths(input, inputPath, outputPath)
 	addAssetpathAttribute(input, inputPath, outputPath)
@@ -22,17 +21,17 @@ func ResolvePaths(input *html.Node, inputPath string, outputPath string) {
 
 // resolveAttributePaths rewrites any relative URLs found in node attributes
 // (eg. href, src, action, style)
-func resolveAttributePaths(input *html.Node, inputPath string, outputPath string) {
+func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	URL_ATTR := []string{"href", "src", "action", "style"}
-	matches := htmlutils.Search(input, htmlutils.HasAnyAttr(URL_ATTR...))
+	matches := input.Search(htmlutils.HasAnyAttr(URL_ATTR...))
 	for _, match := range matches {
 		for _, attr := range URL_ATTR {
 			if val, ok := htmlutils.Attr(match, attr); ok {
 				if URL_TEMPLATE.FindAllStringIndex(val, 0) == nil {
 					if attr == "style" {
-						htmlutils.SetAttr(match, attr, p.rewriteURL(inputPath, outputPath, val))
+						htmlutils.SetAttr(match, attr, rewriteURL(inputPath, outputPath, val))
 					} else {
-						htmlutils.SetAttr(match, attr, p.rewriteRelPath(inputPath, outputPath, val))
+						htmlutils.SetAttr(match, attr, rewriteRelPath(inputPath, outputPath, val))
 					}
 				}
 			}
@@ -41,22 +40,22 @@ func resolveAttributePaths(input *html.Node, inputPath string, outputPath string
 }
 
 // resolveCSSPaths rewrites any relative URLs found in CSS blocks
-func resolveCSSPaths(input *html.Node, inputPath string, outputPath string) {
-	matches := htmlutils.Search(input, htmlutils.IsStyleBlock)
+func resolveCSSPaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
+	matches := input.Search(htmlutils.IsStyleBlock)
 	for _, match := range matches {
-		text := p.rewriteURL(inputPath, outputPath, htmlutils.GetTextContent(match))
+		text := rewriteURL(inputPath, outputPath, htmlutils.GetTextContent(match))
 		htmlutils.SetTextContent(match, text)
 	}
 }
 
 // addAssetpathAttribute adds the assetpath attribute to any polymer-element
 // nodes that may be missing it
-func addAssetpathAttribute(input *html.Node, inputPath string, outputPath string) {
+func addAssetpathAttribute(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	assetPath, _ := filepath.Rel(outputPath, inputPath)
 	if assetPath != "" {
 		assetPath += "/"
 	}
-	matches := htmlutils.Search(input, htmlutils.IsPolymerElementMissingAssetpath)
+	matches := input.Search(htmlutils.IsPolymerElementMissingAssetpath)
 	for _, match := range matches {
 		htmlutils.SetAttr(match, "assetpath", assetPath)
 	}

@@ -3,7 +3,6 @@ package htmlutils
 import (
 	"bytes"
 	"code.google.com/p/go.net/html"
-	"code.google.com/p/go.net/html/atom"
 	"os"
 )
 
@@ -12,20 +11,20 @@ type Fragment struct {
 }
 
 // FromFile loads an Fragment from a file
-func FromFile(filename string) (*Fragment, error) {
-	context := &html.Node{
-		Type:     html.ElementNode,
-		Data:     "body",
-		DataAtom: atom.Body,
-	}
+func FromFile(filename string, parent *html.Node) (*Fragment, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	ns, err := html.ParseFragment(f, context)
+	ns, err := html.ParseFragment(f, parent)
 	if err != nil {
 		return nil, err
+	}
+
+	// Set the parent
+	for _, n := range ns {
+		n.Parent = parent
 	}
 
 	// Set the sibling chain

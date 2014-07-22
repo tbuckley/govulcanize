@@ -60,7 +60,18 @@ func GetElementByID(doc *html.Node, id string) *html.Node {
 }
 
 func RemoveNode(doc *Fragment, n *html.Node) {
-
+	if n.PrevSibling != nil {
+		n.PrevSibling.NextSibling = n.NextSibling
+	}
+	if n.NextSibling != nil {
+		n.NextSibling.PrevSibling = n.PrevSibling
+	}
+	if doc.FirstNode == n {
+		doc.FirstNode = n.NextSibling
+	}
+	if doc.LastNode == n {
+		doc.LastNode = n.PrevSibling
+	}
 }
 
 func ReplaceNodeWithFragment(doc *Fragment, node *html.Node, fragment *Fragment) {
@@ -72,6 +83,12 @@ func ReplaceNodeWithFragment(doc *Fragment, node *html.Node, fragment *Fragment)
 	// Insert into linked list
 	fragment.FirstNode.PrevSibling = node.PrevSibling
 	fragment.LastNode.NextSibling = node.NextSibling
+	if node.PrevSibling != nil {
+		node.PrevSibling.NextSibling = fragment.FirstNode
+	}
+	if node.NextSibling != nil {
+		node.NextSibling.PrevSibling = fragment.LastNode
+	}
 
 	// Update parent
 	if node.Parent != nil {

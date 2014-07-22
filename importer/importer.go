@@ -1,28 +1,43 @@
 package importer
 
 import (
+	"code.google.com/p/go.net/html"
+	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 
 	"github.com/tbuckley/vulcanize/htmlutils"
+	"github.com/tbuckley/vulcanize/pathresolver"
 )
+
+var (
+	logger *log.Logger
+)
+
+func init() {
+	logger = log.New(os.Stdout, "logger:", log.Lshortfile)
+}
 
 type Importer struct {
 	read             map[string]bool
 	excludedPatterns []*regexp.Regexp
+	outputDir        string
 }
 
 // NewImporter creates a new importer using the list of excluded patterns
-func NewImporter(excludedPatterns []*regexp.Regexp) *Importer {
+func NewImporter(excludedPatterns []*regexp.Regexp, outputDir string) *Importer {
 	return &Importer{
 		read:             make(map[string]bool),
 		excludedPatterns: excludedPatterns,
+		outputDir:        outputDir,
 	}
 }
 
 // Flatten flattens out all of the imports from a document
-func (i *Importer) Flatten(filename string) (*htmlutils.Fragment, error) {
-	doc, err := i.load(filename)
+func (i *Importer) Flatten(filename string, context *html.Node) (*htmlutils.Fragment, error) {
+	logger.Printf("Flatten: %v", filename)
+	doc, err := i.load(filename, context)
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +47,15 @@ func (i *Importer) Flatten(filename string) (*htmlutils.Fragment, error) {
 
 // load returns an HTML fragment representing the contents of the given file
 // and ensures that the same file isn't loaded multiple times
-func (i *Importer) load(filename string) (*htmlutils.Fragment, error) {
-	doc, err := htmlutils.FromFile(filename)
+func (i *Importer) load(filename string, context *html.Node) (*htmlutils.Fragment, error) {
+	doc, err := htmlutils.FromFile(filename, context)
 	if err != nil {
 		return nil, err
 	}
+
+	dir := filepath.Dir(filename)
+	pathresolver.ResolvePaths(doc, dir, i.outputDir)
+
 	i.read[filename] = true
 	return doc, nil
 }
@@ -53,7 +72,7 @@ func (i *Importer) processImports(doc *htmlutils.Fragment, filename string) erro
 			if i.deduplicateImport(importFile) {
 				htmlutils.RemoveNode(doc, imp)
 			} else {
-				content, err := i.Flatten(importFile)
+				content, err := i.Flatten(importFile, imp.Parent)
 				if err != nil {
 					return err
 				}

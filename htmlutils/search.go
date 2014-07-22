@@ -50,3 +50,42 @@ func HasAnyAttr(attrKeys ...string) HTMLPred {
 		return false
 	}
 }
+
+func HasAttrValue(attrKey, attrValue string) HTMLPred {
+	return func(n *html.Node) bool {
+		for _, attr := range n.Attr {
+			if attr.Key == attrKey && attr.Val == attrValue {
+				return true
+			}
+		}
+		return false
+	}
+}
+
+func HasTagname(tagname string) HTMLPred {
+	return func(n *html.Node) bool {
+		return n.Type == html.ElementNode && n.Data == tagname
+	}
+}
+
+func And(preds ...HTMLPred) HTMLPred {
+	return func(n *html.Node) bool {
+		for _, p := range preds {
+			if !p(n) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func Or(preds ...HTMLPred) HTMLPred {
+	return func(n *html.Node) bool {
+		for _, p := range preds {
+			if p(n) {
+				return true
+			}
+		}
+		return false
+	}
+}
