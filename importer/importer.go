@@ -1,13 +1,10 @@
 package importer
 
 import (
-	"bytes"
 	"path/filepath"
 	"regexp"
 
-	"code.google.com/p/go.net/html"
 	"github.com/tbuckley/vulcanize/htmlutils"
-	"github.com/tbuckley/vulcanize/pathresolver"
 )
 
 type Importer struct {
@@ -25,7 +22,7 @@ func NewImporter(excludedPatterns []*regexp.Regexp) *Importer {
 
 // Flatten flattens out all of the imports from a document
 func (i *Importer) Flatten(filename string) (*htmlutils.Fragment, error) {
-	doc, err := load(filename)
+	doc, err := i.load(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -47,20 +44,20 @@ func (i *Importer) load(filename string) (*htmlutils.Fragment, error) {
 // processImports iterates over the imports in a document, inlining available
 // ones and skipping those that have been excluded
 func (i *Importer) processImports(doc *htmlutils.Fragment, filename string) error {
-	imports := doc.Imports()
-	for _, i := range imports {
-		href := htmlutils.Attr(i, "href")
-		if !i.excludeImport(href) {
+	imports := doc.Search(htmlutils.IsImport)
+	for _, imp := range imports {
+		href, ok := htmlutils.Attr(imp, "href")
+		if ok && !i.excludeImport(href) {
 			dir := filepath.Dir(filename)
 			importFile := filepath.Join(dir, href)
 			if i.deduplicateImport(importFile) {
-				htmlutils.Remove(i)
+				htmlutils.RemoveNode(doc, imp)
 			} else {
 				content, err := i.Flatten(importFile)
 				if err != nil {
 					return err
 				}
-				htmlutils.Replace(i, content)
+				htmlutils.ReplaceNodeWithFragment(doc, imp, content)
 			}
 		}
 	}

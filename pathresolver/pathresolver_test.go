@@ -16,7 +16,7 @@ func TestPathResolver_resolveAttributePaths(t *testing.T) {
 		document, _ := html.Parse(r)
 		p.resolveAttributePaths(document, inputPath, outputPath)
 		buf := new(bytes.Buffer)
-		target := htmlutils.GetElementById(document, id)
+		target := htmlutils.GetElementByID(document, id)
 		if target != nil {
 			html.Render(buf, target)
 			return buf.String()
@@ -51,7 +51,7 @@ func TestPathResolver_resolveCSSPaths(t *testing.T) {
 		document, _ := html.Parse(r)
 		p.resolveCSSPaths(document, inputPath, outputPath)
 		buf := new(bytes.Buffer)
-		target := htmlutils.GetElementById(document, id)
+		target := htmlutils.GetElementByID(document, id)
 		if target != nil {
 			html.Render(buf, target)
 			return buf.String()
@@ -74,7 +74,7 @@ func TestPathResolver_addAssetpathAttribute(t *testing.T) {
 		document, _ := html.Parse(r)
 		p.addAssetpathAttribute(document, inputPath, outputPath)
 		buf := new(bytes.Buffer)
-		target := htmlutils.GetElementById(document, id)
+		target := htmlutils.GetElementByID(document, id)
 		if target != nil {
 			html.Render(buf, target)
 			return buf.String()

@@ -3,12 +3,13 @@ package htmlutils
 import (
 	"bytes"
 	"code.google.com/p/go.net/html"
+	"code.google.com/p/go.net/html/atom"
+	"os"
 )
 
-type HTMLIterator func(*Fragment)
-
-// An array of *html.Node
-type DocumentFragment *html.Node
+type Fragment struct {
+	FirstNode, LastNode *html.Node
+}
 
 // FromFile loads an Fragment from a file
 func FromFile(filename string) (*Fragment, error) {
@@ -17,12 +18,17 @@ func FromFile(filename string) (*Fragment, error) {
 		Data:     "body",
 		DataAtom: atom.Body,
 	}
-	ns, err := html.ParseFragment(r, context)
+	f, err := os.Open(filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// Set the chain
+	ns, err := html.ParseFragment(f, context)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the sibling chain
 	for i, n := range ns {
 		if i != 0 {
 			n.PrevSibling = ns[i-1]
@@ -38,7 +44,7 @@ func FromFile(filename string) (*Fragment, error) {
 	}, nil
 }
 
-func (f Fragment) Search(pred HTMLPred) []*Fragment {
+func (f *Fragment) Search(pred HTMLPred) []*html.Node {
 	matches := make([]*html.Node, 0)
 	f.eachNode(func(n *html.Node) {
 		submatches := Search(n, pred)
@@ -47,8 +53,8 @@ func (f Fragment) Search(pred HTMLPred) []*Fragment {
 	return matches
 }
 
-func (f Fragment) String() string {
-	contents = ""
+func (f *Fragment) String() string {
+	contents := ""
 	f.eachNode(func(n *html.Node) {
 		buf := new(bytes.Buffer)
 		html.Render(buf, n)
@@ -57,7 +63,7 @@ func (f Fragment) String() string {
 	return contents
 }
 
-func (f Fragment) eachNode(fn HTMLIterator) {
+func (f Fragment) eachNode(fn NodeFn) {
 	for snaker := f.FirstNode; snaker != nil; snaker = snaker.NextSibling {
 		fn(snaker)
 	}
