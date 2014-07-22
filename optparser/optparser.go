@@ -56,15 +56,22 @@ type ConfigExcludes struct {
 }
 
 func Parse() (*Options, error) {
+	options := new(Options)
+	config := new(Config)
+
 	flag.Parse()
+
+	options.Verbose = *verbose
+	options.Help = *help
+
+	if options.Help {
+		return options, nil
+	}
 
 	// Input file may also be a positional arg
 	if flag.NArg() == 1 {
 		*input = flag.Arg(0)
 	}
-
-	options := new(Options)
-	config := new(Config)
 
 	options.Excludes.Imports = []*regexp.Regexp{ABS_URL}
 	options.Excludes.Scripts = []*regexp.Regexp{ABS_URL}
@@ -123,9 +130,6 @@ func Parse() (*Options, error) {
 
 	options.Inline = *inline
 	options.Strip = *strip
-
-	options.Verbose = *verbose
-	options.Help = *help
 
 	return options, nil
 }

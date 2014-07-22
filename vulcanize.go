@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -32,6 +33,11 @@ func main() {
 	options, err := optparser.Parse()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	if options.Help {
+		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
 	fmt.Printf("%#v\n", options)
