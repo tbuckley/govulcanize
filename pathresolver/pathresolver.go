@@ -23,7 +23,7 @@ func ResolvePaths(input *htmlutils.Fragment, inputPath string, outputPath string
 // (eg. href, src, action, style)
 func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	URL_ATTR := []string{"href", "src", "action", "style"}
-	matches := input.Search(htmlutils.HasAnyAttr(URL_ATTR...))
+	matches := input.Search(htmlutils.HasAnyAttrP(URL_ATTR...))
 	for _, match := range matches {
 		for _, attr := range URL_ATTR {
 			if val, ok := htmlutils.Attr(match, attr); ok {

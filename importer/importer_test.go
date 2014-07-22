@@ -36,22 +36,22 @@ func TestImporter_Flatten(t *testing.T) {
 
 	var els []*html.Node
 
-	els = doc.Search(htmlutils.HasTagname("foo-a"))
+	els = doc.Search(htmlutils.HasTagnameP("foo-a"))
 	if len(els) != 1 {
 		t.Error("foo-a tag missing from vulcanized document")
 	}
 
-	els = doc.Search(htmlutils.And(htmlutils.HasTagname("polymer-element"), htmlutils.HasAttrValue("name", "foo-a")))
+	els = doc.Search(htmlutils.AndP(htmlutils.HasTagnameP("polymer-element"), htmlutils.HasAttrValueP("name", "foo-a")))
 	if len(els) != 1 {
 		t.Error("polymer-element[name=\"foo-b\"] tag missing from vulcanized document")
 	}
 
-	els = doc.Search(htmlutils.And(htmlutils.HasTagname("polymer-element"), htmlutils.HasAttrValue("name", "foo-b")))
+	els = doc.Search(htmlutils.AndP(htmlutils.HasTagnameP("polymer-element"), htmlutils.HasAttrValueP("name", "foo-b")))
 	if len(els) != 1 {
 		t.Error("polymer-element[name=\"foo-b\"] tag missing from vulcanized document")
 	}
 
-	els = doc.Search(htmlutils.HasTagname("link"))
+	els = doc.Search(htmlutils.HasTagnameP("link"))
 	if len(els) != 0 {
 		t.Error("link tags left in vulcanized document")
 	}

@@ -33,42 +33,41 @@ func Search(n *html.Node, pred HTMLPred) []*html.Node {
 	return matches
 }
 
-// Return a predicate that checks to see if the given node has any of the
-// attributes
-func HasAnyAttr(attrKeys ...string) HTMLPred {
-	attrMap := make(map[string]bool)
-	for _, attrKey := range attrKeys {
-		attrMap[attrKey] = true
+// HasAnyAttrP creates a predicate that checks whether a node has any of the attributes
+func HasAnyAttrP(attrKeys ...string) HTMLPred {
+	preds := make([]HTMLPred, 0, len(attrKeys))
+	for _, key := range attrKeys {
+		preds = append(preds, HasAttrP(key))
 	}
+	return OrP(preds...)
+}
 
+// HasAttrP creates a predicate that checks whether a node has the attribute
+func HasAttrP(attrKey string) HTMLPred {
 	return func(n *html.Node) bool {
-		for _, attr := range n.Attr {
-			if _, ok := attrMap[attr.Key]; ok {
-				return true
-			}
-		}
-		return false
+		_, ok := Attr(n, attrKey)
+		return ok
 	}
 }
 
-func HasAttrValue(attrKey, attrValue string) HTMLPred {
+// HasAttrValueP creates a predicate that checks whether a node has the attribute
+// with the value
+func HasAttrValueP(attrKey, attrValue string) HTMLPred {
 	return func(n *html.Node) bool {
-		for _, attr := range n.Attr {
-			if attr.Key == attrKey && attr.Val == attrValue {
-				return true
-			}
-		}
-		return false
+		val, ok := Attr(n, attrKey)
+		return ok && val == attrValue
 	}
 }
 
-func HasTagname(tagname string) HTMLPred {
+// HasTagnameP creates a predicate that checks whether a node has the tagname
+func HasTagnameP(tagname string) HTMLPred {
 	return func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.Data == tagname
 	}
 }
 
-func And(preds ...HTMLPred) HTMLPred {
+// AndP creates a predicate that checks whether all of the predicates are met
+func AndP(preds ...HTMLPred) HTMLPred {
 	return func(n *html.Node) bool {
 		for _, p := range preds {
 			if !p(n) {
@@ -79,7 +78,8 @@ func And(preds ...HTMLPred) HTMLPred {
 	}
 }
 
-func Or(preds ...HTMLPred) HTMLPred {
+// OrP creates a predicate that checks whether any of the predicates are met
+func OrP(preds ...HTMLPred) HTMLPred {
 	return func(n *html.Node) bool {
 		for _, p := range preds {
 			if p(n) {
