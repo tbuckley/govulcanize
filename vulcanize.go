@@ -1,45 +1,39 @@
-package vulcanize
+package main
 
 import (
-	"bytes"
+	"fmt"
 	"log"
 	"os"
-	"path"
-	"path/filepath"
-	"regexp"
 
-	"code.google.com/p/go.net/html"
-
-	"github.com/tbuckley/vulcanize/htmlutils"
 	"github.com/tbuckley/vulcanize/importer"
-	"github.com/tbuckley/vulcanize/pathresolver"
+	"github.com/tbuckley/vulcanize/optparser"
 )
 
-type Options struct {
-	Input     string   `json:"input"`
-	Inline    bool     `json:"inline"`
-	OutputDir string   `json:"output"`
-	Verbose   bool     `json:"verbose"`
-	Excludes  Excludes `json:"excludes"`
-}
-
-type Excludes struct {
-	Imports []*regexp.Regexp `json:"imports"`
-	Scripts []*regexp.Regexp `json:"scripts"`
-	Styles  []*regexp.Regexp `json:"styles"`
-}
-
 var (
-	options *Options
+	options *optparser.Options
+	logger  *log.Logger
 )
 
 func HandleMainDocument() error {
-	i := importer.NewImporter(options.Excludes.Imports)
-	doc, err := i.Flatten(options.Input)
+	i := importer.New(options.Excludes.Imports, options.OutputDir)
+	doc, err := i.Flatten(options.Input, nil)
 	if err != nil {
 		return err
 	}
 
-	dir := path.Dir(options.Input)
-	pathresolver.ResolvePaths(doc, dir, options.OutputDir)
+	fmt.Println(doc.String())
+
+	return nil
+}
+
+func main() {
+	logger = log.New(os.Stdout, "logger:", log.Lshortfile)
+
+	options, err := optparser.Parse()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%#v\n", options)
+	// HandleMainDocument()
 }
