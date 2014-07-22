@@ -62,8 +62,16 @@ func (f *Fragment) String() string {
 	return contents
 }
 
-func (f Fragment) eachNode(fn NodeFn) {
+func (f *Fragment) eachNode(fn NodeFn) {
 	for snaker := f.FirstNode; snaker != nil; snaker = snaker.NextSibling {
 		fn(snaker)
 	}
+}
+
+func (f *Fragment) Length() int {
+	cnt := 0
+	f.eachNode(func(n *html.Node) {
+		cnt += 1
+	})
+	return cnt
 }

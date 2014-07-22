@@ -75,6 +75,11 @@ func RemoveNode(doc *Fragment, n *html.Node) {
 }
 
 func ReplaceNodeWithFragment(doc *Fragment, node *html.Node, fragment *Fragment) {
+	if fragment.Length() == 0 {
+		RemoveNode(doc, node)
+		return
+	}
+
 	// Set all new nodes' parent
 	fragment.eachNode(func(n *html.Node) {
 		n.Parent = node.Parent
