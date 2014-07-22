@@ -10,7 +10,7 @@ import (
 func TestNewImporter(t *testing.T) {
 	re1 := regexp.MustCompilePOSIX("href.*")
 	re2 := regexp.MustCompilePOSIX("data.*")
-	i := NewImporter([]*regexp.Regexp{re1, re2}, "./")
+	i := New([]*regexp.Regexp{re1, re2}, "./")
 
 	if i == nil {
 		t.Error("returned importer is null")
@@ -26,7 +26,7 @@ func TestNewImporter(t *testing.T) {
 }
 
 func TestImporter_Flatten(t *testing.T) {
-	i := NewImporter(nil, "./")
+	i := New(nil, "./")
 
 	doc, err := i.Flatten("../test/index.html", nil)
 	t.Log(doc.String())

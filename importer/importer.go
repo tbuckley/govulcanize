@@ -26,7 +26,7 @@ type Importer struct {
 }
 
 // NewImporter creates a new importer using the list of excluded patterns
-func NewImporter(excludedPatterns []*regexp.Regexp, outputDir string) *Importer {
+func New(excludedPatterns []*regexp.Regexp, outputDir string) *Importer {
 	return &Importer{
 		read:             make(map[string]bool),
 		excludedPatterns: excludedPatterns,
