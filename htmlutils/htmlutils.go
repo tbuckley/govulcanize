@@ -2,6 +2,7 @@ package htmlutils
 
 import (
 	"code.google.com/p/go.net/html"
+	"code.google.com/p/go.net/html/atom"
 )
 
 // Attr returns the value of the attribute. ok indicates if the attribute
@@ -74,6 +75,10 @@ func RemoveNode(doc *Fragment, n *html.Node) {
 	}
 }
 
+func ReplaceNodeWithNode(doc *Fragment, origNode *html.Node, newNode *html.Node) {
+	ReplaceNodeWithFragment(doc, origNode, FromNode(newNode))
+}
+
 func ReplaceNodeWithFragment(doc *Fragment, node *html.Node, fragment *Fragment) {
 	if fragment.Length() == 0 {
 		RemoveNode(doc, node)
@@ -112,4 +117,44 @@ func ReplaceNodeWithFragment(doc *Fragment, node *html.Node, fragment *Fragment)
 	if doc.LastNode == node {
 		doc.LastNode = fragment.LastNode
 	}
+}
+
+func CreateScript(content string) *html.Node {
+	script := &html.Node{
+		Type:     html.ElementNode,
+		Data:     "script",
+		DataAtom: atom.Script,
+	}
+	textnode := &html.Node{
+		Type: html.TextNode,
+		Data: content,
+	}
+	script.AppendChild(textnode)
+	return script
+}
+
+func CreateExternalScript(src string) *html.Node {
+	script := &html.Node{
+		Type:     html.ElementNode,
+		Data:     "script",
+		DataAtom: atom.Script,
+		Attr: []html.Attribute{
+			html.Attribute{Key: "src", Val: src},
+		},
+	}
+	return script
+}
+
+func CreateStyle(content string) *html.Node {
+	style := &html.Node{
+		Type:     html.ElementNode,
+		Data:     "style",
+		DataAtom: atom.Style,
+	}
+	textnode := &html.Node{
+		Type: html.TextNode,
+		Data: content,
+	}
+	style.AppendChild(textnode)
+	return style
 }

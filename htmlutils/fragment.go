@@ -10,6 +10,13 @@ type Fragment struct {
 	FirstNode, LastNode *html.Node
 }
 
+func FromNode(n *html.Node) *Fragment {
+	return &Fragment{
+		FirstNode: n,
+		LastNode:  n,
+	}
+}
+
 // FromFile loads an Fragment from a file
 func FromFile(filename string, parent *html.Node) (*Fragment, error) {
 	f, err := os.Open(filename)

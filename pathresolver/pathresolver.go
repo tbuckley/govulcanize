@@ -29,9 +29,9 @@ func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPa
 			if val, ok := htmlutils.Attr(match, attr); ok {
 				if URL_TEMPLATE.FindAllStringIndex(val, 0) == nil {
 					if attr == "style" {
-						htmlutils.SetAttr(match, attr, rewriteURL(inputPath, outputPath, val))
+						htmlutils.SetAttr(match, attr, RewriteURL(inputPath, outputPath, val))
 					} else {
-						htmlutils.SetAttr(match, attr, rewriteRelPath(inputPath, outputPath, val))
+						htmlutils.SetAttr(match, attr, RewriteRelPath(inputPath, outputPath, val))
 					}
 				}
 			}
@@ -43,7 +43,7 @@ func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPa
 func resolveCSSPaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	matches := input.Search(htmlutils.IsStyleBlock)
 	for _, match := range matches {
-		text := rewriteURL(inputPath, outputPath, htmlutils.TextContent(match))
+		text := RewriteURL(inputPath, outputPath, htmlutils.TextContent(match))
 		htmlutils.SetTextContent(match, text)
 	}
 }
@@ -61,7 +61,7 @@ func addAssetpathAttribute(input *htmlutils.Fragment, inputPath string, outputPa
 	}
 }
 
-// rewriteRelPath rewrites a path relative to inputPath to be relative to outputPath
+// RewriteRelPath rewrites a path relative to inputPath to be relative to outputPath
 func RewriteRelPath(inputPath string, outputPath string, rel string) string {
 	if isAbsoluteURL(rel) {
 		return rel
@@ -71,13 +71,13 @@ func RewriteRelPath(inputPath string, outputPath string, rel string) string {
 	return relPath
 }
 
-// rewriteURL converts all instances of `url('<RELPATH>')` in a CSS string to urls
+// RewriteURL converts all instances of `url('<RELPATH>')` in a CSS string to urls
 // relative to the outputPath
 func RewriteURL(inputPath string, outputPath string, cssText string) string {
 	return URL.ReplaceAllStringFunc(cssText, func(match string) string {
 		path := stripQuotes(match)
 		path = path[4 : len(path)-1]
-		path = rewriteRelPath(inputPath, outputPath, path)
+		path = RewriteRelPath(inputPath, outputPath, path)
 		return "url(" + path + ")"
 	})
 }
