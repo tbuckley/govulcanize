@@ -2,6 +2,11 @@
 
 A golang version of the Vulcanize tool for Polymer.
 
+### Dependencies
+
+* code.google.com/p/go.net/html
+* github.com/docopt/docopt.go
+
 ### Differences from nodejs version
 
 * Whitespace
