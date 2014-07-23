@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	ABS_URL      = regexp.MustCompilePOSIX("(^data:)|(^http[s]?:)|(^\\/)")
-	URL          = regexp.MustCompilePOSIX("url\\([^)]*\\)")
-	QUOTES       = regexp.MustCompilePOSIX("[\"']")
-	URL_TEMPLATE = regexp.MustCompilePOSIX("{{.*}}")
+	ABS_URL      = regexp.MustCompile("(^data:)|(^http[s]?:)|(^\\/)")
+	URL          = regexp.MustCompile("url\\([^)]*\\)")
+	QUOTES       = regexp.MustCompile("[\"']")
+	URL_TEMPLATE = regexp.MustCompile("{{.*}}")
 )
 
 func ResolvePaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
@@ -27,7 +27,7 @@ func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPa
 	for _, match := range matches {
 		for _, attr := range URL_ATTR {
 			if val, ok := htmlutils.Attr(match, attr); ok {
-				if URL_TEMPLATE.FindAllStringIndex(val, 0) == nil {
+				if URL_TEMPLATE.FindAllStringIndex(val, -1) == nil {
 					if attr == "style" {
 						htmlutils.SetAttr(match, attr, RewriteURL(inputPath, outputPath, val))
 					} else {
