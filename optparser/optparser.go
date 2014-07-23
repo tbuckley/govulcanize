@@ -2,26 +2,16 @@ package optparser
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
+	"github.com/docopt/docopt.go"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
 )
 
 var (
-	input      = flag.String("input", "", "Input file name")
-	output     = flag.String("output", "vulcanized.html", "Output file name")
-	verbose    = flag.Bool("verbose", false, "More verbose logging")
-	help       = flag.Bool("help", false, "Print this message")
-	configFile = flag.String("config", "", "Read a given config file")
-	strip      = flag.Bool("strip", false, "Remove comments and empty text nodes")
-	csp        = flag.Bool("csp", false, "Extract inline scripts to a separate file (uses <output file name>.js)")
-	inline     = flag.Bool("inline", false, "The opposite of CSP mode, inline all assets (script and css) into the document")
-
 	DEFAULT_FILENAME = "vulcanized.html"
-
-	ABS_URL = regexp.MustCompilePOSIX("(^data:)|(^http[s]?:)|(^\\/)")
+	ABS_URL          = regexp.MustCompilePOSIX("(^data:)|(^http[s]?:)|(^\\/)")
 )
 
 type Options struct {
@@ -36,7 +26,6 @@ type Options struct {
 	Strip   bool
 
 	Verbose bool
-	Help    bool
 }
 
 type Excludes struct {
@@ -59,26 +48,40 @@ func Parse() (*Options, error) {
 	options := new(Options)
 	config := new(Config)
 
-	flag.Parse()
+	// Parse the command-line args
+	arguments := parseArgs()
 
-	options.Verbose = *verbose
-	options.Help = *help
-
-	if options.Help {
-		return options, nil
-	}
-
-	// Input file may also be a positional arg
-	if flag.NArg() == 1 {
-		*input = flag.Arg(0)
-	}
-
+	// Initial configuration
 	options.Excludes.Imports = []*regexp.Regexp{ABS_URL}
 	options.Excludes.Scripts = []*regexp.Regexp{ABS_URL}
 	options.Excludes.Styles = []*regexp.Regexp{ABS_URL}
 
-	if *configFile != "" {
-		configData, err := ioutil.ReadFile(*configFile)
+	// Set initial options
+	options.Input = arguments["<input>"].(string)
+	options.Verbose = arguments["--verbose"].(bool)
+	options.Strip = arguments["--strip"].(bool)
+	options.Inline = arguments["--inline"].(bool)
+
+	// Handle output
+	outputFile, ok := arguments["--output"].(string)
+	if ok {
+		options.Output = outputFile
+	} else {
+		options.Output = filepath.Join(filepath.Dir(options.Input), DEFAULT_FILENAME)
+	}
+	options.OutputDir = filepath.Dir(options.Output)
+
+	// Handle CSP
+	options.CSP = arguments["--csp"].(bool)
+	if options.CSP {
+		dir, htmlFile := filepath.Split(options.Output)
+		jsFile := htmlFile[:len(htmlFile)-len(".html")] + ".js"
+		options.CSPFile = filepath.Join(dir, jsFile)
+	}
+
+	// Try to parse config file
+	if arguments["--config"] != nil {
+		configData, err := ioutil.ReadFile(arguments["--config"].(string))
 		if err != nil {
 			return nil, fmt.Errorf("Config file not found!")
 		}
@@ -88,11 +91,7 @@ func Parse() (*Options, error) {
 		}
 	}
 
-	options.Input = *input
-	if options.Input == "" {
-		return nil, fmt.Errorf("No input file given!")
-	}
-
+	// Read excludes from config file
 	for _, restr := range config.Excludes.Imports {
 		re, err := regexp.CompilePOSIX(restr)
 		if err != nil {
@@ -115,21 +114,24 @@ func Parse() (*Options, error) {
 		options.Excludes.Styles = append(options.Excludes.Styles, re)
 	}
 
-	options.Output = *output
-	if options.Output == "" {
-		options.Output = filepath.Join(filepath.Dir(options.Input), DEFAULT_FILENAME)
-	}
-	options.OutputDir = filepath.Dir(options.Output)
-
-	options.CSP = *csp
-	if options.CSP {
-		dir, htmlFile := filepath.Split(options.Output)
-		jsFile := htmlFile[:len(htmlFile)-len(".html")] + ".js"
-		options.CSPFile = filepath.Join(dir, jsFile)
-	}
-
-	options.Inline = *inline
-	options.Strip = *strip
-
 	return options, nil
+}
+
+func parseArgs() map[string]interface{} {
+	usage := `Go Vulcanize.
+
+Usage:
+  vulcanize [options] <input>
+
+Options:
+  -h, --help                  Show this screen.
+  -v, --verbose               Verbose mode.
+  -o <file>, --output <file>  Output file name (defaults to vulcanized.html).
+  --config <file>             Read a given config file.
+  --strip                     Remove comments and empty text nodes.
+  --csp                       Extract inline scripts to a separate file (uses <output file name>.js).
+  --inline                    The opposite of CSP mode, inline all assets (script and css) into the document.`
+
+	arguments, _ := docopt.Parse(usage, nil, true, "Go Vulcanize 0.0.1", false)
+	return arguments
 }
