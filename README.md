@@ -12,4 +12,4 @@ A golang version of the Vulcanize tool for Polymer.
 ### TODO
 
 * Enable `--strip` flag
-* Handle deduplication of imports
+* Handle deduplication of absolute/excluded imports
