@@ -33,6 +33,16 @@ func Search(n *html.Node, pred HTMLPred) []*html.Node {
 	return matches
 }
 
+// Closest will find the nearest parent that matches the given predicate
+func Closest(n *html.Node, pred HTMLPred) *html.Node {
+	for parent := n.Parent; parent != nil; parent = parent.Parent {
+		if pred(parent) {
+			return parent
+		}
+	}
+	return nil
+}
+
 // HasAnyAttrP creates a predicate that checks whether a node has any of the attributes
 func HasAnyAttrP(attrKeys ...string) HTMLPred {
 	preds := make([]HTMLPred, 0, len(attrKeys))
@@ -87,5 +97,12 @@ func OrP(preds ...HTMLPred) HTMLPred {
 			}
 		}
 		return false
+	}
+}
+
+// NotP creates a predicate that inverts the given predicate
+func NotP(pred HTMLPred) HTMLPred {
+	return func(n *html.Node) bool {
+		return !pred(n)
 	}
 }

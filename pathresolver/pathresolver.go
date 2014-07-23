@@ -43,7 +43,7 @@ func resolveAttributePaths(input *htmlutils.Fragment, inputPath string, outputPa
 func resolveCSSPaths(input *htmlutils.Fragment, inputPath string, outputPath string) {
 	matches := input.Search(htmlutils.IsStyleBlock)
 	for _, match := range matches {
-		text := rewriteURL(inputPath, outputPath, htmlutils.GetTextContent(match))
+		text := rewriteURL(inputPath, outputPath, htmlutils.TextContent(match))
 		htmlutils.SetTextContent(match, text)
 	}
 }
@@ -62,7 +62,7 @@ func addAssetpathAttribute(input *htmlutils.Fragment, inputPath string, outputPa
 }
 
 // rewriteRelPath rewrites a path relative to inputPath to be relative to outputPath
-func rewriteRelPath(inputPath string, outputPath string, rel string) string {
+func RewriteRelPath(inputPath string, outputPath string, rel string) string {
 	if isAbsoluteURL(rel) {
 		return rel
 	}
@@ -73,7 +73,7 @@ func rewriteRelPath(inputPath string, outputPath string, rel string) string {
 
 // rewriteURL converts all instances of `url('<RELPATH>')` in a CSS string to urls
 // relative to the outputPath
-func rewriteURL(inputPath string, outputPath string, cssText string) string {
+func RewriteURL(inputPath string, outputPath string, cssText string) string {
 	return URL.ReplaceAllStringFunc(cssText, func(match string) string {
 		path := stripQuotes(match)
 		path = path[4 : len(path)-1]

@@ -30,8 +30,8 @@ func SetAttr(n *html.Node, attrKey string, attrValue string) {
 	})
 }
 
-// GetTextContent returns the text within the given node
-func GetTextContent(n *html.Node) string {
+// TextContent returns the text within the given node
+func TextContent(n *html.Node) string {
 	child := n.FirstChild
 	if child.Type == html.TextNode {
 		return child.Data

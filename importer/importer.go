@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/tbuckley/vulcanize/htmlutils"
+	"github.com/tbuckley/vulcanize/inliner"
 	"github.com/tbuckley/vulcanize/pathresolver"
 )
 
@@ -20,16 +21,18 @@ func init() {
 }
 
 type Importer struct {
-	read             map[string]bool
-	excludedPatterns []*regexp.Regexp
-	outputDir        string
+	read            map[string]bool
+	excludedImports []*regexp.Regexp
+	excludedSheets  []*regexp.Regexp
+	outputDir       string
 }
 
 // NewImporter creates a new importer using the list of excluded patterns
-func New(excludedPatterns []*regexp.Regexp, outputDir string) *Importer {
+func New(excludedImports, excludedSheets []*regexp.Regexp, outputDir string) *Importer {
 	return &Importer{
 		read:             make(map[string]bool),
 		excludedPatterns: excludedPatterns,
+		excludedSheets:   excludedSheets,
 		outputDir:        outputDir,
 	}
 }
@@ -55,6 +58,7 @@ func (i *Importer) load(filename string, context *html.Node) (*htmlutils.Fragmen
 
 	dir := filepath.Dir(filename)
 	pathresolver.ResolvePaths(doc, dir, i.outputDir)
+	inliner.InlineSheets(doc, i.outputDir, i.excludedSheets)
 
 	i.read[filename] = true
 	return doc, nil
@@ -66,7 +70,7 @@ func (i *Importer) processImports(doc *htmlutils.Fragment, filename string) erro
 	imports := doc.Search(htmlutils.IsImport)
 	for _, imp := range imports {
 		href, ok := htmlutils.Attr(imp, "href")
-		if ok && !i.excludeImport(href) {
+		if ok && !inliner.IsExcluded(href, i.excludedImports) {
 			dir := filepath.Dir(filename)
 			importFile := filepath.Join(dir, href)
 			if i.deduplicateImport(importFile) {
@@ -81,16 +85,6 @@ func (i *Importer) processImports(doc *htmlutils.Fragment, filename string) erro
 		}
 	}
 	return nil
-}
-
-// excludeImport returns true if the provided href should not be imported
-func (i *Importer) excludeImport(href string) bool {
-	for _, pattern := range i.excludedPatterns {
-		if pattern.MatchString(href) {
-			return true
-		}
-	}
-	return false
 }
 
 // deduplicateImport returns true if filename has already been imported
