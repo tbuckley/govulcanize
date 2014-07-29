@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -122,14 +123,53 @@ func SeparateScripts(doc *htmlutils.Fragment, filename string, verbose bool) {
 }
 
 func DeduplicateImports(doc *htmlutils.Fragment) {
+	read := make(map[string]bool)
 
+	fn := func(n *html.Node) bool {
+		val, _ := htmlutils.Attr(n, "href")
+
+		// parse the href attribute as a URL path, default to http scheme
+		u := &url.URL{
+			Scheme: "http",
+		}
+		u, err := u.Parse(val)
+		// assume broken urls are not duplicates
+		if err != nil {
+			return false
+		}
+		// put the string value of the URL into the map
+		us := u.String()
+		_, ok := read[us]
+		if !ok {
+			read[us] = true
+		}
+		// if that url was in the map, return true
+		return ok
+	}
+
+	preds := htmlutils.AndP(
+		htmlutils.HasTagnameP("link"),
+		htmlutils.HasAttrValueP("rel", "import"),
+		fn)
+
+	extras := doc.Search(preds)
+	for _, extra := range extras {
+		htmlutils.RemoveNode(doc, extra)
+	}
 }
 
 func RemoveCommentsAndWhitespace(doc *htmlutils.Fragment) {
-
+	isCommentNode := func(n *html.Node) bool {
+		return n.Type == html.CommentNode
+	}
+	comments := doc.Search(isCommentNode)
+	for _, comment := range comments {
+		htmlutils.RemoveNode(doc, comment)
+	}
 }
 
 func WriteFile(doc *htmlutils.Fragment, filename string) {
 	content := doc.String()
+	content = "<!doctype html>" + content
 	ioutil.WriteFile(filename, []byte(content), 0775)
 }
